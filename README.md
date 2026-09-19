@@ -14,32 +14,9 @@ An Azure Logic App Standard solution that accepts an XML payload through an HTTP
 
 The solution contains three source/configuration artifacts:
 
-- `workflow/HTTPMapper.json` — Logic App Standard workflow definition.
-- `deployment/template.json` — ARM deployment template for the Logic App Standard host resource.
-- `deployment/parameters.json` — Deployment parameter values/placeholders.
-
-The workflow is stateful and is triggered by an HTTP request. The request body is passed to the XSLT transformation. After the transformation succeeds, the workflow returns HTTP status `200` and uses the transformed body as the response.
-
-### High level flow
-
-```text
-HTTP Client
-    |
-    |  XML request body
-    v
-When an HTTP request is received
-    |
-    v
-Transform_XML
-    |
-    |  XSLT map: Map.xslt
-    v
-Response (HTTP 200)
-    |
-    |  transformed XML
-    v
-HTTP Client
-```
+- `HTTPMapper.json` — Logic App Standard workflow definition.
+- `template.json` — ARM deployment template for the Logic App Standard host resource.
+- `parameters.json` — Deployment parameter values/placeholders.
 
 ## Infrastructure template
 
@@ -75,7 +52,7 @@ Before deployment, have:
 From the repository root:
 
 ```bash
-az deployment group create   --resource-group <RESOURCE_GROUP_NAME>   --template-file deployment/template.json   --parameters @deployment/parameters.json   --parameters sites_logicapp_azure_http_mapper_name=logicapp-azure-http-mapper                serverfarms_ASP_RGAPIM_aea9_externalid="/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Web/serverfarms/<APP_SERVICE_PLAN>"
+az deployment group create   --resource-group <RESOURCE_GROUP_NAME>   --template-file template.json   --parameters @deployment/parameters.json   --parameters sites_logicapp_azure_http_mapper_name=logicapp-azure-http-mapper                serverfarms_ASP_RGAPIM_aea9_externalid="/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Web/serverfarms/<APP_SERVICE_PLAN>"
 ```
 
 Replace the placeholders with values from your Azure environment.
