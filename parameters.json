@@ -1,0 +1,12 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serverfarms_ASP_RGPOProcessor_a091_externalid": {
+            "value": "REPLACE_WITH_APP_SERVICE_PLAN_RESOURCE_ID"
+        },
+        "sites_la_order_process_name": {
+            "value": "la-order-process"
+        }
+    }
+}

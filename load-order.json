@@ -1,0 +1,245 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "actions": {
+            "Lists_blobs_(V2)": {
+                "type": "ApiConnection",
+                "inputs": {
+                    "host": {
+                        "connection": {
+                            "referenceName": "azureblob"
+                        }
+                    },
+                    "method": "get",
+                    "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('AccountNameFromSettings'))}/foldersV2/@{encodeURIComponent(encodeURIComponent('JTJmcHVyY2hhc2VvcmRlcnhtbA=='))}",
+                    "queries": {
+                        "nextPageMarker": "",
+                        "useFlatListing": false
+                    }
+                },
+                "runAfter": {},
+                "metadata": {
+                    "JTJmcHVyY2hhc2VvcmRlcnhtbA==": "/purchaseorderxml"
+                }
+            },
+            "For_each": {
+                "type": "foreach",
+                "foreach": "@body('Lists_blobs_(V2)')?['value']",
+                "actions": {
+                    "Copy_blob_(V2)": {
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "referenceName": "azureblob"
+                                }
+                            },
+                            "method": "post",
+                            "headers": {
+                                "ReadFileMetadataFromServer": true
+                            },
+                            "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('AccountNameFromSettings'))}/copyFile",
+                            "queries": {
+                                "source": "@items('For_each')?['Path']",
+                                "destination": "archive/@{concat(utcNow(),'_',item()?['Name'])}",
+                                "overwrite": true,
+                                "queryParametersSingleEncoded": true
+                            }
+                        }
+                    },
+                    "HTTP": {
+                        "type": "Http",
+                        "inputs": {
+                            "uri": "https://YOUR-API-HOST.example.com/purchaseorder",
+                            "method": "POST",
+                            "body": "@body('Get_blob_content_(V2)')"
+                        },
+                        "runAfter": {
+                            "Get_blob_content_(V2)": [
+                                "SUCCEEDED"
+                            ]
+                        },
+                        "runtimeConfiguration": {
+                            "staticResult": {
+                                "name": "HTTP0",
+                                "staticResultOptions": "Enabled"
+                            },
+                            "contentTransfer": {
+                                "transferMode": "Chunked"
+                            }
+                        }
+                    },
+                    "Get_blob_content_(V2)": {
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "referenceName": "azureblob"
+                                }
+                            },
+                            "method": "get",
+                            "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('AccountNameFromSettings'))}/files/@{encodeURIComponent(encodeURIComponent(item()?['Path']))}/content",
+                            "queries": {
+                                "inferContentType": true
+                            }
+                        },
+                        "runAfter": {
+                            "Copy_blob_(V2)": [
+                                "SUCCEEDED"
+                            ]
+                        }
+                    },
+                    "Create_blob_(V2)": {
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "referenceName": "azureblob"
+                                }
+                            },
+                            "method": "post",
+                            "body": "@body('HTTP')",
+                            "headers": {
+                                "ReadFileMetadataFromServer": true
+                            },
+                            "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('AccountNameFromSettings'))}/files",
+                            "queries": {
+                                "folderPath": "/omspo",
+                                "name": "@concat('oms_',utcNow(),'.json')",
+                                "queryParametersSingleEncoded": true
+                            }
+                        },
+                        "runAfter": {
+                            "HTTP": [
+                                "SUCCEEDED"
+                            ]
+                        },
+                        "runtimeConfiguration": {
+                            "contentTransfer": {
+                                "transferMode": "Chunked"
+                            }
+                        }
+                    },
+                    "Delete_blob_(V2)": {
+                        "type": "ApiConnection",
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "referenceName": "azureblob"
+                                }
+                            },
+                            "method": "delete",
+                            "headers": {
+                                "SkipDeleteIfFileNotFoundOnServer": false
+                            },
+                            "path": "/v2/datasets/@{encodeURIComponent(encodeURIComponent('AccountNameFromSettings'))}/files/@{encodeURIComponent(encodeURIComponent(item()?['Path']))}"
+                        },
+                        "runAfter": {
+                            "Create_blob_(V2)": [
+                                "SUCCEEDED"
+                            ]
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Lists_blobs_(V2)": [
+                        "SUCCEEDED"
+                    ]
+                }
+            }
+        },
+        "outputs": {},
+        "triggers": {
+            "Recurrence": {
+                "type": "Recurrence",
+                "recurrence": {
+                    "interval": 1,
+                    "frequency": "Week"
+                }
+            }
+        },
+        "staticResults": {
+            "HTTP0": {
+                "status": "Succeeded",
+                "outputs": {
+                    "statusCode": "OK",
+                    "body": {
+                        "purchaseOrder": {
+                            "poNumber": "PO-EXAMPLE-1001",
+                            "poDate": "2026-01-03",
+                            "buyer": {
+                                "buyerId": "BUY-EXAMPLE-001",
+                                "companyName": "Example Buyer Ltd",
+                                "contactName": "Buyer Contact",
+                                "email": "buyer@example.com",
+                                "phone": "+00-0000000000"
+                            },
+                            "supplier": {
+                                "supplierId": "SUP-EXAMPLE-101",
+                                "companyName": "Example Supplier Ltd",
+                                "contactName": "Supplier Contact",
+                                "email": "supplier@example.com",
+                                "phone": "+00-0000000000"
+                            },
+                            "shipTo": {
+                                "locationName": "Example Warehouse",
+                                "addressLine1": "100 Example Industrial Estate",
+                                "city": "Example City",
+                                "state": "EX",
+                                "postalCode": "000000",
+                                "country": "IN"
+                            },
+                            "billTo": {
+                                "companyName": "Example Buyer Ltd",
+                                "addressLine1": "1 Example Business Park",
+                                "city": "Example City",
+                                "state": "EX",
+                                "postalCode": "000000",
+                                "country": "IN"
+                            },
+                            "items": [
+                                {
+                                    "lineNumber": 1,
+                                    "itemCode": "CU-ROD-10MM",
+                                    "description": "Copper Rod 10mm",
+                                    "quantity": 500,
+                                    "uom": "KG",
+                                    "unitPrice": 720.5,
+                                    "currency": "INR",
+                                    "lineAmount": 360250,
+                                    "deliveryDate": "2026-01-15"
+                                },
+                                {
+                                    "lineNumber": 2,
+                                    "itemCode": "AL-SHEET-5MM",
+                                    "description": "Aluminium Sheet 5mm",
+                                    "quantity": 300,
+                                    "uom": "KG",
+                                    "unitPrice": 210,
+                                    "currency": "INR",
+                                    "lineAmount": 63000,
+                                    "deliveryDate": "2026-01-20"
+                                }
+                            ],
+                            "summary": {
+                                "subTotal": 423250,
+                                "tax": {
+                                    "taxType": "GST",
+                                    "taxRate": 18,
+                                    "taxAmount": 76185
+                                },
+                                "grandTotal": 499435
+                            },
+                            "paymentTerms": "Net 30",
+                            "deliveryTerms": "FOB",
+                            "status": "OPEN",
+                            "remarks": "Deliver during working hours only"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "kind": "Stateful"
+}
