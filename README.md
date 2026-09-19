@@ -187,4 +187,3 @@ Never commit:
 ## Infrastructure and Application Separation
 
 A useful way to understand this repository is to separate the assets into two layers.
-
