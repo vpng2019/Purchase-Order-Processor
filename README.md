@@ -183,7 +183,3 @@ Never commit:
 - Connection strings containing credentials
 - Private certificates
 - API keys
-
-## Infrastructure and Application Separation
-
-A useful way to understand this repository is to separate the assets into two layers.
